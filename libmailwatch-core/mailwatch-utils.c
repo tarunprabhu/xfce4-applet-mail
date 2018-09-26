@@ -54,10 +54,57 @@
 #include <gtk/gtk.h>
 
 #include <libxfce4ui/libxfce4ui.h>
+#include <libsecret/secret.h>
 
 #include "mailwatch-utils.h"
 #include "mailwatch-common.h"
 #include "mailwatch.h"
+
+#define SCHEMA_NAME       "xfce4.applet.mail"
+#define SCHEMA_ATTR_HOST  "host"
+#define SCHEMA_ATTR_USER  "username"
+
+static const SecretSchema schema = {
+    SCHEMA_NAME,
+    SECRET_SCHEMA_NONE,
+    {
+        {SCHEMA_ATTR_HOST, SECRET_SCHEMA_ATTRIBUTE_STRING},
+        {SCHEMA_ATTR_USER, SECRET_SCHEMA_ATTRIBUTE_STRING},
+        {NULL, 0},
+    }};
+
+void xfce_mailwatch_set_password(const gchar* host, const gchar* username,
+                                 const gchar* password) {
+    gchar* oldpass;
+    GError *error = NULL;
+
+    /* Only set the password if it is new or if it has changed */
+    oldpass =
+        secret_password_lookup_sync(&schema, NULL, &error, SCHEMA_ATTR_HOST,
+                                    host, SCHEMA_ATTR_USER, username, NULL);
+
+    if(!oldpass)
+      secret_password_store_sync(
+          &schema, SECRET_COLLECTION_DEFAULT, SCHEMA_NAME, password, NULL,
+          &error, SCHEMA_ATTR_HOST, host, SCHEMA_ATTR_USER, username, NULL);
+    else if(strcmp(oldpass, password) != 0)
+      secret_password_store_sync(
+          &schema, SECRET_COLLECTION_DEFAULT, SCHEMA_NAME, password, NULL,
+          &error, SCHEMA_ATTR_HOST, host, SCHEMA_ATTR_USER, username, NULL);
+
+    g_free(oldpass);
+}
+
+gchar* xfce_mailwatch_get_password(const gchar* host, const gchar* username) {
+    GError *error = NULL;
+    gchar* password;
+
+    password =
+        secret_password_lookup_sync(&schema, NULL, &error, SCHEMA_ATTR_HOST,
+                                    host, SCHEMA_ATTR_USER, username, NULL);
+
+    return password;
+}
 
 GtkWidget *
 xfce_mailwatch_custom_button_new(const gchar *text, const gchar *icon)

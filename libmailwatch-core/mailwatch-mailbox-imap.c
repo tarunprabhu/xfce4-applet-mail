@@ -1817,8 +1817,6 @@ imap_restore_param_list(XfceMailwatchMailbox *mailbox, GList *params)
             imailbox->host = g_strdup(param->value);
         else if(!strcmp(param->key, "username"))
             imailbox->username = g_strdup(param->value);
-        else if(!strcmp(param->key, "password"))
-            imailbox->password = g_strdup(param->value);
         else if(!strcmp(param->key, "auth_type"))
             imailbox->auth_type = atoi(param->value);
         else if(!strcmp(param->key, "server_directory"))
@@ -1832,6 +1830,8 @@ imap_restore_param_list(XfceMailwatchMailbox *mailbox, GList *params)
         else if(!strcmp(param->key, "n_newmail_boxes"))
             n_newmail_boxes = atoi(param->value);
     }
+    imailbox->password =
+        xfce_mailwatch_get_password(imailbox->host, imailbox->username);
 
     if(n_newmail_boxes > 0) {
         /* save the dummy 'inbox' item for later */
@@ -1882,13 +1882,9 @@ imap_save_param_list(XfceMailwatchMailbox *mailbox)
     param->value = g_strdup(imailbox->username);
     params = g_list_prepend(params, param);
     
-    /* FIXME: probably would be nice to obscure this somewhat to deter casual
-     * accidental exposure */
-    param = g_new(XfceMailwatchParam, 1);
-    param->key = g_strdup("password");
-    param->value = g_strdup(imailbox->password);
-    params = g_list_prepend(params, param);
-    
+    xfce_mailwatch_set_password(imailbox->host, imailbox->username,
+                                imailbox->password);
+
     param = g_new(XfceMailwatchParam, 1);
     param->key = g_strdup("auth_type");
     param->value = g_strdup_printf("%d", imailbox->auth_type);

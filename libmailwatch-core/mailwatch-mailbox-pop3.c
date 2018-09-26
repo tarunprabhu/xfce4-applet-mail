@@ -949,8 +949,6 @@ pop3_restore_param_list(XfceMailwatchMailbox *mailbox, GList *params)
             pmailbox->host = g_strdup(param->value);
         else if(!strcmp(param->key, "username"))
             pmailbox->username = g_strdup(param->value);
-        else if(!strcmp(param->key, "password"))
-            pmailbox->password = g_strdup(param->value);
         else if(!strcmp(param->key, "auth_type"))
             pmailbox->auth_type = atoi(param->value);
         else if(!strcmp(param->key, "use_standard_port"))
@@ -960,7 +958,9 @@ pop3_restore_param_list(XfceMailwatchMailbox *mailbox, GList *params)
         else if(!strcmp(param->key, "timeout"))
             pmailbox->timeout = atoi(param->value);
     }
-    
+    pmailbox->password =
+        xfce_mailwatch_get_password(pmailbox->host, pmailbox->username);
+
     g_mutex_unlock(pmailbox->config_mx);
 }
 
@@ -983,13 +983,9 @@ pop3_save_param_list(XfceMailwatchMailbox *mailbox)
     param->value = g_strdup(pmailbox->username);
     params = g_list_prepend(params, param);
     
-    /* FIXME: probably would be nice to obscure this somewhat to deter casual
-     * accidental exposure */
-    param = g_new(XfceMailwatchParam, 1);
-    param->key = g_strdup("password");
-    param->value = g_strdup(pmailbox->password);
-    params = g_list_prepend(params, param);
-    
+    xfce_mailwatch_set_password(pmailbox->host, pmailbox->username,
+                                pmailbox->password);
+
     param = g_new(XfceMailwatchParam, 1);
     param->key = g_strdup("auth_type");
     param->value = g_strdup_printf("%d", pmailbox->auth_type);

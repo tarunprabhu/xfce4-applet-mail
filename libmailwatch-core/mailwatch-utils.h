@@ -46,6 +46,10 @@ gint xfce_mailwatch_base64_decode(const gchar *str,
                                   guint8 *data,
                                   gsize size);
 
+gchar* xfce_mailwatch_get_password(const gchar* host, const gchar* username);
+void xfce_mailwatch_set_password(const gchar* host, const gchar* username,
+                                 const gchar* password);
+
 G_END_DECLS
 
 #endif

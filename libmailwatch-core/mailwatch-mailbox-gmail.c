@@ -91,7 +91,8 @@ typedef struct
     XfceMailwatchMailbox mailbox;
     
     GMutex *config_mx;
-    
+
+    gchar* host;
     gchar *username;
     gchar *password;
     guint timeout;
@@ -609,12 +610,13 @@ gmail_restore_param_list(XfceMailwatchMailbox *mailbox, GList *params)
         
         if(!strcmp(param->key, "username"))
             gmailbox->username = g_strdup(param->value);
-        else if(!strcmp(param->key, "password"))
-            gmailbox->password = g_strdup(param->value);
         else if(!strcmp(param->key, "timeout"))
             gmailbox->timeout = atoi(param->value);
     }
-    
+    gmailbox->host = g_strdup("gmail.com");
+    gmailbox->password =
+        xfce_mailwatch_get_password(gmailbox->host, gmailbox->username);
+
     g_mutex_unlock(gmailbox->config_mx);
 }
 
@@ -632,11 +634,9 @@ gmail_save_param_list(XfceMailwatchMailbox *mailbox)
     param->value = g_strdup(gmailbox->username);
     params = g_list_prepend(params, param);
     
-    param = g_new(XfceMailwatchParam, 1);
-    param->key = g_strdup("password");
-    param->value = g_strdup(gmailbox->password);
-    params = g_list_prepend(params, param);
-    
+    xfce_mailwatch_set_password(gmailbox->host, gmailbox->username,
+                                gmailbox->password);
+
     param = g_new(XfceMailwatchParam, 1);
     param->key = g_strdup("timeout");
     param->value = g_strdup_printf("%u", gmailbox->timeout);
@@ -657,7 +657,8 @@ gmail_mailbox_free(XfceMailwatchMailbox *mailbox)
         g_thread_yield();
     
     g_mutex_free(gmailbox->config_mx);
-    
+
+    g_free(gmailbox->host);
     g_free(gmailbox->username);
     g_free(gmailbox->password);
     

@@ -80,8 +80,9 @@ typedef struct
     XfcePanelPlugin *plugin;
     XfceMailwatch   *mailwatch;
     
-    GtkWidget *button;
+    GtkWidget *evt;
     GtkWidget *image;
+    GtkWidget *box;
     
     gboolean newmail_icon_visible;
     guint    new_messages;
@@ -100,7 +101,7 @@ typedef struct
     GdkPixbuf             *pix_log[XFCE_MAILWATCH_N_LOG_LEVELS];
     XfceMailwatchLogLevel log_status;
     GtkListStore          *loglist;
-
+  
     gboolean auto_open_online_doc;
 } XfceMailwatchPlugin;
 
@@ -142,8 +143,8 @@ mailwatch_new_messages_changed_cb(XfceMailwatch *mailwatch,
         mailwatch_set_size(mwp->plugin,
                            xfce_panel_plugin_get_size(mwp->plugin),
                            mwp);
-        gtk_widget_set_tooltip_text(mwp->button, _("No new mail"));
-        gtk_widget_trigger_tooltip_query(mwp->button);
+        gtk_widget_set_tooltip_text(mwp->image, _("No new mail"));
+        gtk_widget_trigger_tooltip_query(mwp->image);
     } else if (new_messages > 0) {
         if (!mwp->newmail_icon_visible) {
             mwp->newmail_icon_visible = TRUE;
@@ -178,8 +179,8 @@ mailwatch_new_messages_changed_cb(XfceMailwatch *mailwatch,
             g_strfreev(mailbox_names);
             g_free(new_message_counts);
             
-            gtk_widget_set_tooltip_text(mwp->button, ttip_str->str);
-            gtk_widget_trigger_tooltip_query(mwp->button);
+            gtk_widget_set_tooltip_text(mwp->image, ttip_str->str);
+            gtk_widget_trigger_tooltip_query(mwp->image);
             g_string_free(ttip_str, TRUE);
             
             if (mwp->new_messages_command)
@@ -195,9 +196,6 @@ mailwatch_button_press_cb(GtkWidget      *w,
                           GdkEventButton *evt,
                           gpointer        user_data)
 {
-    if (evt->button == MOUSE_BUTTON_MIDDLE)
-        gtk_button_pressed(GTK_BUTTON(w));
-    
     return FALSE;
 }
 
@@ -226,9 +224,6 @@ mailwatch_button_release_cb(GtkWidget      *w,
                 break;
         }
     }
-    
-    if (evt->button == MOUSE_BUTTON_MIDDLE)
-        gtk_button_released(GTK_BUTTON(w));
     
     return FALSE;
 }
@@ -343,8 +338,8 @@ mailwatch_set_size(XfcePanelPlugin     *plugin,
      * shouldn't be needed, since i think the panel button convienence
      * thingo sets them to zero, but we'll leave it for now.  i'm
      * not sure where the '- 2' at the end comes from. */
-    size = wsize - MAX(GTK_WIDGET(mwp->button)->style->xthickness, 
-                       GTK_WIDGET(mwp->button)->style->ythickness) * 2 - 2;
+    size = wsize - MAX(GTK_WIDGET(mwp->image)->style->xthickness, 
+                       GTK_WIDGET(mwp->image)->style->ythickness) * 2 - 2;
     
     if(xfce_panel_plugin_get_orientation(plugin) == GTK_ORIENTATION_HORIZONTAL) {
         img_width = -1;
@@ -430,7 +425,7 @@ mailwatch_set_size(XfcePanelPlugin     *plugin,
 
     width += wsize - size;
     height += wsize - size;
-    gtk_widget_set_size_request(mwp->button, width, height);
+    gtk_widget_set_size_request(mwp->image, width, height);
 
     return TRUE;
 }
@@ -452,23 +447,26 @@ mailwatch_create(XfcePanelPlugin *plugin)
         return NULL;
     }
 
-    mwp->button = xfce_create_panel_button();
-    gtk_button_set_relief(GTK_BUTTON(mwp->button), GTK_RELIEF_NONE);
-    gtk_widget_show(mwp->button);
-    gtk_container_add(GTK_CONTAINER(plugin), mwp->button);
-    g_signal_connect(mwp->button, "button-press-event",
+    mwp->evt = gtk_event_box_new();
+    gtk_container_add(GTK_CONTAINER(plugin), mwp->evt);
+    xfce_panel_plugin_add_action_widget(plugin, mwp->evt);
+    gtk_widget_show(mwp->evt);
+    g_signal_connect(mwp->evt, "button-press-event",
             G_CALLBACK(mailwatch_button_press_cb), mwp);
-    g_signal_connect(mwp->button, "button-release-event",
+    g_signal_connect(mwp->evt, "button-release-event",
             G_CALLBACK(mailwatch_button_release_cb), mwp);
     
-    gtk_widget_set_tooltip_text(mwp->button, _("No new mail"));
+    gtk_widget_set_tooltip_text(mwp->image, _("No new mail"));
     
-    xfce_panel_plugin_add_action_widget(plugin, mwp->button);
+    mwp->box = xfce_hvbox_new(GTK_ORIENTATION_HORIZONTAL, FALSE, 0);
+    gtk_container_add(GTK_CONTAINER(mwp->evt), mwp->box);
+    gtk_widget_show(mwp->box);
     
     mwp->image = gtk_image_new();
+    gtk_misc_set_alignment(GTK_MISC(mwp->image), 0.5, 0.5);
+    gtk_box_pack_start(GTK_BOX(mwp->box), mwp->image, TRUE, FALSE, 2);
     gtk_widget_show(mwp->image);
-    gtk_container_add(GTK_CONTAINER(mwp->button), mwp->image);
-
+    
     mwp->log_dialog = NULL;
     mwp->loglist = gtk_list_store_new(LOGLIST_N_COLUMNS,
                                       GDK_TYPE_PIXBUF,
@@ -481,7 +479,7 @@ mailwatch_create(XfcePanelPlugin *plugin)
     xfce_mailwatch_signal_connect( mwp->mailwatch,
             XFCE_MAILWATCH_SIGNAL_LOG_MESSAGE,
             mailwatch_log_message_cb, mwp);
-    
+
     return mwp;
 }
 
