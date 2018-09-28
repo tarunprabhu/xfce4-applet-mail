@@ -506,6 +506,10 @@ pop3_check_mail_th(gpointer user_data)
         
         xfce_mailwatch_signal_new_messages(pmailbox->mailwatch,
                 XFCE_MAILWATCH_MAILBOX(pmailbox), new_messages);
+    } else {
+        xfce_mailwatch_log_message(
+            pmailbox->mailwatch, XFCE_MAILWATCH_MAILBOX(pmailbox),
+            XFCE_MAILWATCH_LOG_ERROR, "%s", "Authentication error");
     }
     
     if(xfce_mailwatch_net_conn_is_connected(pmailbox->net_conn))

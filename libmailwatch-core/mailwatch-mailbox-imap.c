@@ -684,9 +684,13 @@ imap_check_mail_th(gpointer user_data)
             new_messages += imap_check_mailbox(imailbox, net_conn, l->data);
             DBG("checked mail folder %s, total is now %d new messages", (gchar *)l->data, new_messages);
         }
-        
+
         xfce_mailwatch_signal_new_messages(imailbox->mailwatch,
                 XFCE_MAILWATCH_MAILBOX(imailbox), new_messages);
+    } else {
+        xfce_mailwatch_log_message(
+            imailbox->mailwatch, XFCE_MAILWATCH_MAILBOX(imailbox),
+            XFCE_MAILWATCH_LOG_ERROR, "%s", "Authentication error");
     }
 
     if(xfce_mailwatch_net_conn_is_connected(net_conn))

@@ -70,10 +70,17 @@
 
 #define BORDER                             8
 #define DEFAULT_LOG_LINES                500
-#define DEFAULT_NORMAL_ICON            "xfce-nomail"
-#define DEFAULT_NEW_MAIL_ICON          "xfce-newmail"
+#define DEFAULT_NORMAL_ICON            "xfce-mail-none"
+#define DEFAULT_NEW_MAIL_ICON          "xfce-mail-ocher"
 #define MOUSE_BUTTON_LEFT                  1
 #define MOUSE_BUTTON_MIDDLE                2
+
+typedef enum
+{
+    ICON_VISIBLE_NORMAL,
+    ICON_VISIBLE_ERROR,
+    ICON_VISIBLE_NEWMAIL
+} XfceMailwatchVisibleIcon;
 
 typedef struct
 {
@@ -84,22 +91,20 @@ typedef struct
     GtkWidget *image;
     GtkWidget *box;
     
-    gboolean newmail_icon_visible;
+    XfceMailwatchVisibleIcon visible_icon;
     guint    new_messages;
     
     gchar *click_command;
     gchar *new_messages_command;
 
     GdkPixbuf *pix_normal;
-    GdkPixbuf *pix_newmail;    
+    GdkPixbuf *pix_newmail;
     gchar     *normal_icon;
     gchar     *new_mail_icon;
 
     GtkWidget             *log_dialog;
     guint                 log_lines;
-    gboolean              show_log_status;
     GdkPixbuf             *pix_log[XFCE_MAILWATCH_N_LOG_LEVELS];
-    XfceMailwatchLogLevel log_status;
     GtkListStore          *loglist;
   
     gboolean auto_open_online_doc;
@@ -108,6 +113,7 @@ typedef struct
 enum {
     ICON_TYPE_NORMAL,
     ICON_TYPE_NEW_MAIL,
+    ICON_TYPE_ERROR,
     XFCE_MAILWATCH_RESPONSE_CLEAR
 };
 
@@ -126,9 +132,8 @@ static void
 mailwatch_set_default_config(XfceMailwatchPlugin *mwp)
 {
     mwp->log_lines = 200;
-    mwp->show_log_status = TRUE;
 }
-        
+
 static void
 mailwatch_new_messages_changed_cb(XfceMailwatch *mailwatch,
                                   gpointer       new_message_count,
@@ -136,9 +141,10 @@ mailwatch_new_messages_changed_cb(XfceMailwatch *mailwatch,
 {
     XfceMailwatchPlugin *mwp = user_data;
     guint                new_messages = GPOINTER_TO_UINT(new_message_count);
-    
-    if (new_messages == 0 && mwp->newmail_icon_visible) {
-        mwp->newmail_icon_visible = FALSE;
+
+    if ((new_messages == 0) &&
+        (mwp->visible_icon != ICON_VISIBLE_NORMAL)) {
+        mwp->visible_icon = ICON_VISIBLE_NORMAL;
         mwp->new_messages = 0;
         mailwatch_set_size(mwp->plugin,
                            xfce_panel_plugin_get_size(mwp->plugin),
@@ -146,8 +152,8 @@ mailwatch_new_messages_changed_cb(XfceMailwatch *mailwatch,
         gtk_widget_set_tooltip_text(mwp->image, _("No new mail"));
         gtk_widget_trigger_tooltip_query(mwp->image);
     } else if (new_messages > 0) {
-        if (!mwp->newmail_icon_visible) {
-            mwp->newmail_icon_visible = TRUE;
+        if (mwp->visible_icon != ICON_VISIBLE_NEWMAIL) {
+            mwp->visible_icon = ICON_VISIBLE_NEWMAIL;
             mailwatch_set_size(mwp->plugin,
                                xfce_panel_plugin_get_size(mwp->plugin),
                                mwp);
@@ -258,9 +264,10 @@ mailwatch_log_message_cb(XfceMailwatch *mailwatch,
                        -1);
     
     g_free(new_message);
-    
-    if (entry->level > mwp->log_status) {
-        mwp->log_status = entry->level;
+
+    if ((entry->level == XFCE_MAILWATCH_LOG_WARNING) ||
+        (entry->level == XFCE_MAILWATCH_LOG_ERROR)) {
+        mwp->visible_icon = ICON_VISIBLE_ERROR;
         mailwatch_set_size(mwp->plugin,
                            xfce_panel_plugin_get_size(mwp->plugin),
                            mwp);
@@ -298,26 +305,25 @@ mailwatch_get_mini_icon(GtkWidget   *dummy,
 
 static GdkPixbuf *
 mailwatch_build_icon(XfceMailwatchPlugin *mwp,
-                     gboolean             newmail)
+                     XfceMailwatchVisibleIcon visible_icon)
 {
-    GdkPixbuf *pb = newmail ? gdk_pixbuf_copy(mwp->pix_newmail)
-                            : gdk_pixbuf_copy(mwp->pix_normal);
-    GdkPixbuf *overlay = NULL;
+    GdkPixbuf *pb = NULL, *overlay = NULL;
 
-    if (mwp->log_status && mwp->show_log_status
-       && mwp->log_status < XFCE_MAILWATCH_N_LOG_LEVELS)
-    {
-        overlay = mwp->pix_log[mwp->log_status];
-    }
-    
-    if (overlay) {
+    if (visible_icon == ICON_VISIBLE_ERROR) {
         gint h, ow, oh;
+
+        pb = gdk_pixbuf_copy(mwp->pix_normal);
+        overlay = mwp->pix_log[XFCE_MAILWATCH_LOG_ERROR];
 
         h = gdk_pixbuf_get_height(pb);
         ow = gdk_pixbuf_get_width(overlay);
         oh = gdk_pixbuf_get_height(overlay);
         gdk_pixbuf_composite(overlay, pb, 0, h - oh, ow, oh, 0, h - oh,
                              1.0, 1.0, GDK_INTERP_HYPER, 255);
+    } else if (visible_icon == ICON_VISIBLE_NORMAL) {
+        pb = gdk_pixbuf_copy(mwp->pix_normal);
+    } else if (visible_icon == ICON_VISIBLE_NEWMAIL) {
+        pb = gdk_pixbuf_copy(mwp->pix_newmail);
     }
 
     return pb;
@@ -417,7 +423,7 @@ mailwatch_set_size(XfcePanelPlugin     *plugin,
             mailwatch_get_mini_icon(GTK_WIDGET(plugin), GTK_STOCK_DIALOG_ERROR,
                                     width < height ? width : height);
     
-    pb = mailwatch_build_icon(mwp, mwp->newmail_icon_visible);
+    pb = mailwatch_build_icon(mwp, mwp->visible_icon);
     width = gdk_pixbuf_get_width(pb);
     height = gdk_pixbuf_get_height(pb);
     gtk_image_set_from_pixbuf(GTK_IMAGE(mwp->image), pb);
@@ -466,7 +472,8 @@ mailwatch_create(XfcePanelPlugin *plugin)
     gtk_misc_set_alignment(GTK_MISC(mwp->image), 0.5, 0.5);
     gtk_box_pack_start(GTK_BOX(mwp->box), mwp->image, TRUE, FALSE, 2);
     gtk_widget_show(mwp->image);
-    
+
+    mwp->visible_icon = ICON_VISIBLE_NORMAL;
     mwp->log_dialog = NULL;
     mwp->loglist = gtk_list_store_new(LOGLIST_N_COLUMNS,
                                       GDK_TYPE_PIXBUF,
@@ -476,7 +483,7 @@ mailwatch_create(XfcePanelPlugin *plugin)
     xfce_mailwatch_signal_connect(mwp->mailwatch,
             XFCE_MAILWATCH_SIGNAL_NEW_MESSAGE_COUNT_CHANGED,
             mailwatch_new_messages_changed_cb, mwp);
-    xfce_mailwatch_signal_connect( mwp->mailwatch,
+    xfce_mailwatch_signal_connect(mwp->mailwatch,
             XFCE_MAILWATCH_SIGNAL_LOG_MESSAGE,
             mailwatch_log_message_cb, mwp);
 
@@ -534,13 +541,11 @@ mailwatch_read_config(XfcePanelPlugin     *plugin,
     } else {
         mwp->new_mail_icon = g_strdup(DEFAULT_NEW_MAIL_ICON);
     }
-    
+
     if(reload_icon)
         mailwatch_set_size(plugin, xfce_panel_plugin_get_size(plugin), mwp);
     
     mwp->log_lines = xfce_rc_read_int_entry(rc, "log_lines", DEFAULT_LOG_LINES);
-    
-    mwp->show_log_status = xfce_rc_read_bool_entry(rc, "show_log_status", TRUE);
 
     mwp->auto_open_online_doc = xfce_rc_read_bool_entry(rc, "auto_open_online_doc", FALSE);
 
@@ -579,13 +584,15 @@ mailwatch_write_config(XfcePanelPlugin     *plugin,
     xfce_rc_write_entry(rc, "click_command", 
                         mwp->click_command?mwp->click_command:"");
     xfce_rc_write_entry(rc, "new_messages_command",
-                        mwp->new_messages_command?mwp->new_messages_command:"");
+                        mwp->new_messages_command ? mwp->new_messages_command
+                                                  : "");
     xfce_rc_write_entry(rc, "normal_icon",
-                        mwp->normal_icon?mwp->normal_icon:DEFAULT_NORMAL_ICON);
+                        mwp->normal_icon ? mwp->normal_icon
+                                         : DEFAULT_NORMAL_ICON);
     xfce_rc_write_entry(rc, "new_mail_icon",
-                        mwp->new_mail_icon?mwp->new_mail_icon:DEFAULT_NEW_MAIL_ICON);
+                        mwp->new_mail_icon ? mwp->new_mail_icon
+                                           : DEFAULT_NEW_MAIL_ICON);
     xfce_rc_write_int_entry(rc, "log_lines", mwp->log_lines);
-    xfce_rc_write_bool_entry(rc, "show_log_status", mwp->show_log_status);
     xfce_rc_write_bool_entry(rc, "auto_open_online_doc", mwp->auto_open_online_doc);
 
     xfce_rc_close(rc);
@@ -642,33 +649,18 @@ mailwatch_log_lines_changed_cb(GtkWidget *w,
 }
 
 static void
-mailwatch_log_status_toggled_cb(GtkToggleButton *tb,
-                                gpointer         user_data)
-{
-    XfceMailwatchPlugin *mwp = user_data;
-    
-    mwp->show_log_status = gtk_toggle_button_get_active(tb);
-    
-    xfce_mailwatch_get_new_messages(mwp->mailwatch);
-    mailwatch_set_size(mwp->plugin,
-                       xfce_panel_plugin_get_size(mwp->plugin),
-                       mwp);
-}
-
-static void
 mailwatch_view_log_clicked_cb(GtkWidget *widget,
                               gpointer   user_data )
 {
     XfceMailwatchPlugin     *mwp = user_data;
     GtkWidget               *vbox, *hbox, *scrollw, *treeview, *button, *lbl,
-                            *sbtn, *chk;
+                            *sbtn;
     
     if (mwp->log_dialog) {
         gtk_window_present(GTK_WINDOW(mwp->log_dialog));
         return;
     }
 
-    mwp->log_status = 0;
     mailwatch_set_size(mwp->plugin,
                        xfce_panel_plugin_get_size(mwp->plugin),
                        mwp);
@@ -744,14 +736,7 @@ mailwatch_view_log_clicked_cb(GtkWidget *widget,
     g_signal_connect(G_OBJECT(sbtn), "value-changed",
                      G_CALLBACK(mailwatch_log_lines_changed_cb), mwp);
     gtk_label_set_mnemonic_widget(GTK_LABEL(lbl), sbtn);
-    
-    chk = gtk_check_button_new_with_mnemonic(_("Show log _status in icon"));
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(chk), mwp->show_log_status);
-    gtk_widget_show(chk);
-    gtk_box_pack_start(GTK_BOX(vbox), chk, FALSE, FALSE, 0);
-    g_signal_connect(G_OBJECT(chk), "toggled",
-                     G_CALLBACK(mailwatch_log_status_toggled_cb), mwp);
-    
+        
     button = gtk_button_new_from_stock(GTK_STOCK_CLEAR);
     gtk_widget_show( button );
     gtk_dialog_add_action_widget(GTK_DIALOG(mwp->log_dialog), button,
@@ -789,7 +774,7 @@ mailwatch_iconbtn_clicked_cb(GtkWidget           *w,
     gint icon_type = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w),
                                                        "mailwatch-icontype"));
     
-    g_return_if_fail(icon_type == ICON_TYPE_NORMAL || icon_type == ICON_TYPE_NEW_MAIL);
+    g_return_if_fail(icon_type == ICON_TYPE_NORMAL || icon_type == ICON_TYPE_NEW_MAIL || icon_type == ICON_TYPE_ERROR);
     
     toplevel = gtk_widget_get_toplevel(w);
     chooser = exo_icon_chooser_dialog_new (_("Select Icon"),
@@ -802,13 +787,15 @@ mailwatch_iconbtn_clicked_cb(GtkWidget           *w,
     switch(icon_type) {
     case ICON_TYPE_NORMAL:
         exo_icon_chooser_dialog_set_icon (EXO_ICON_CHOOSER_DIALOG (chooser),
-                                          exo_str_is_empty (mwp->normal_icon) ? 
-                                          DEFAULT_NORMAL_ICON : mwp->normal_icon);
+                                          exo_str_is_empty (mwp->normal_icon)
+                                              ? DEFAULT_NORMAL_ICON
+                                              : mwp->normal_icon);
         break;
     case ICON_TYPE_NEW_MAIL:
         exo_icon_chooser_dialog_set_icon (EXO_ICON_CHOOSER_DIALOG (chooser),
-                                          exo_str_is_empty (mwp->new_mail_icon) ?
-                                          DEFAULT_NEW_MAIL_ICON : mwp->new_mail_icon);
+                                          exo_str_is_empty (mwp->new_mail_icon)
+                                              ? DEFAULT_NEW_MAIL_ICON
+                                              : mwp->new_mail_icon);
         break;
     }
     
@@ -993,7 +980,7 @@ mailwatch_create_options(XfcePanelPlugin     *plugin,
                      G_CALLBACK(mailwatch_dialog_response), mwp);
 
     gtk_container_set_border_width(GTK_CONTAINER(dlg), 2);
-    gtk_window_set_icon_name(GTK_WINDOW(dlg), "xfce4-settings");
+    gtk_window_set_icon_name(GTK_WINDOW(dlg), "emblem-mail");
     
     btn = gtk_button_new_from_stock(GTK_STOCK_HELP);
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dlg)->action_area), btn, FALSE,
@@ -1101,7 +1088,7 @@ mailwatch_create_options(XfcePanelPlugin     *plugin,
     
     lbl = gtk_label_new_with_mnemonic(_("Ne_w Mail"));
     gtk_box_pack_start(GTK_BOX(vbox), lbl, FALSE, FALSE, 0);
-    
+
     hbox = gtk_hbox_new(FALSE, BORDER/2);
     gtk_box_pack_start(GTK_BOX(topvbox), hbox, FALSE, FALSE, 0);
    

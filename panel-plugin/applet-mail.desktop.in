@@ -3,6 +3,6 @@ Type=X-XFCE-PanelPlugin
 Encoding=UTF-8
 _Name=Mail Watcher
 _Comment=Check mail from multiple mailboxes
-Icon=xfce-mail
+Icon=emblem-mail
 X-XFCE-Module=appletmail
 X-XFCE-Internal=false

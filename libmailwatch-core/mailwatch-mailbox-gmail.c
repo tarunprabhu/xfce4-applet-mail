@@ -355,6 +355,10 @@ gmail_check_mail(XfceMailwatchGMailMailbox *gmailbox)
                                            XFCE_MAILWATCH_MAILBOX(gmailbox),
                                            new_messages);
     } else {
+        xfce_mailwatch_log_message(
+            gmailbox->mailwatch, XFCE_MAILWATCH_MAILBOX(gmailbox),
+            XFCE_MAILWATCH_LOG_ERROR, "%s",
+            "Could not connect to gmail server");
         DBG("failed to connect to gmail server");
     }
 #undef BUFSIZE
@@ -613,7 +617,7 @@ gmail_restore_param_list(XfceMailwatchMailbox *mailbox, GList *params)
         else if(!strcmp(param->key, "timeout"))
             gmailbox->timeout = atoi(param->value);
     }
-    gmailbox->host = g_strdup("gmail.com");
+    gmailbox->host = g_strdup(GMAIL_HOST);
     gmailbox->password =
         xfce_mailwatch_get_password(gmailbox->host, gmailbox->username);
 

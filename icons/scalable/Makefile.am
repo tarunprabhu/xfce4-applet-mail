@@ -3,7 +3,6 @@ icons_DATA = \
 	xfce-nomail.svg \
 	xfce-newmail.svg \
 	xfce-mail-cyan.svg \
-	xfce-mail-error.svg \
 	xfce-mail-green.svg \
 	xfce-mail-none.svg \
 	xfce-mail-ocher.svg \

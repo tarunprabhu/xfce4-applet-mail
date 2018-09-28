@@ -55,12 +55,13 @@ typedef struct
     XfceMailwatchMailbox *mailbox;
     gchar *mailbox_name;
     guint num_new_messages;
+    gboolean error;
 } XfceMailwatchMailboxData;
 
 struct _XfceMailwatch
 {
     gchar *config_file;
-    
+
     GList *mailbox_types;  /* XfceMailwatchMailboxType * */
     GList *mailboxes;      /* XfceMailwatchMailboxData * */
     
@@ -264,6 +265,7 @@ xfce_mailwatch_load_config(XfceMailwatch *mailwatch)
         mdata = g_new0(XfceMailwatchMailboxData, 1);
         mdata->mailbox = mailbox;
         mdata->mailbox_name = g_strdup(mailbox_name);
+        mdata->error = FALSE;
         mailwatch->mailboxes = g_list_append(mailwatch->mailboxes, mdata);
         
         cfg_entries = xfce_rc_get_entries(rcfile, buf);
@@ -519,6 +521,10 @@ xfce_mailwatch_signal_new_messages(XfceMailwatch *mailwatch,
         XfceMailwatchMailboxData *mdata = l->data;
         
         if(mdata->mailbox == mailbox) {
+            if (mdata->error) {
+                do_signal = TRUE;
+                mdata->error = FALSE;
+            }
             if(mdata->num_new_messages != num_new_messages) {
                 mdata->num_new_messages = num_new_messages;
                 do_signal = TRUE;
@@ -593,6 +599,7 @@ xfce_mailwatch_log_message(XfceMailwatch *mailwatch,
             XfceMailwatchMailboxData *mdata = l->data;
             
             if(mdata->mailbox == mailbox) {
+                mdata->error = TRUE;
                 entry->mailbox_name = g_strdup(mdata->mailbox_name);
                 break;
             }
@@ -846,6 +853,7 @@ config_add_btn_clicked_cb(GtkWidget *w, XfceMailwatch *mailwatch)
         mdata->mailbox = new_mailbox;
         mdata->mailbox_name = new_mailbox_name;
         mdata->num_new_messages = 0;
+        mdata->error = FALSE;
         
         mailwatch->mailboxes = g_list_insert_sorted(mailwatch->mailboxes,
                 mdata, (GCompareFunc)config_compare_mailbox_data);

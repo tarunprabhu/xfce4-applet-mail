@@ -10,13 +10,16 @@
    xmlns:xlink="http://www.w3.org/1999/xlink"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   sodipodi:docname="xfce-nomail.svg"
+   sodipodi:docname="xfce-mail-none.svg"
    height="128.00000pt"
    width="128.00000pt"
    inkscape:version="0.92.2 2405546, 2018-03-11"
    sodipodi:version="0.32"
    id="svg1"
-   version="1.1">
+   version="1.1"
+   inkscape:export-filename="/home/tarun/abs/custom/xfce4-applet-mail/src/xfce4-applet-mail-1.2.0/icons/scalable/xfce-mail-none.png"
+   inkscape:export-xdpi="31.709999"
+   inkscape:export-ydpi="31.709999">
   <metadata
      id="metadata20">
     <rdf:RDF>
@@ -25,7 +28,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -83,7 +86,7 @@
      inkscape:window-height="875"
      inkscape:window-width="862"
      inkscape:cy="80"
-     inkscape:cx="80"
+     inkscape:cx="52.367846"
      inkscape:zoom="2.95"
      inkscape:pageshadow="2"
      inkscape:pageopacity="0.0"
@@ -118,7 +121,7 @@
      height="88.590645"
      width="137.86784"
      id="rect825"
-     style="fill:#e6e6e6;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:3.821475;stroke-linecap:round;stroke-linejoin:round" />
+     style="fill:#f9f9f9;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:3.821475;stroke-linecap:round;stroke-linejoin:round" />
   <path
      sodipodi:nodetypes="ccccc"
      id="path826"
@@ -133,8 +136,11 @@
      d="M 110.95741,80.223776 L 146.92713,122.94777"
      style="fill:none;fill-opacity:0.75000000;fill-rule:evenodd;stroke:#000000;stroke-width:1.2738249" />
   <path
-     style="opacity:1;fill:#999999;fill-opacity:1;stroke:none;stroke-width:0.06779661;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     style="opacity:1;fill:#f9f9f9;fill-opacity:1;stroke:none;stroke-width:0.06779661;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
      d="m 7.9322034,124.0904 c -0.6711358,-0.67114 -0.6779661,-1.12995 -0.6779661,-45.540686 0,-43.031765 0.0253,-44.885613 0.6199121,-45.42373 0.5725857,-0.518182 5.9183466,-0.561012 70.0222846,-0.561012 47.192556,0 69.612206,0.112296 70.058056,0.35091 0.64322,0.34424 0.65568,1.209812 0.65568,45.540683 0,43.348615 -0.0252,45.212625 -0.61991,45.750785 -0.57259,0.51818 -5.9168,0.56101 -70.000002,0.56101 -68.9281111,0 -69.3845051,-0.004 -70.0580546,-0.67796 z M 144.13786,120.41989 c -0.24362,-0.34082 -7.59817,-9.11201 -16.34343,-19.49153 L 111.89394,82.056497 H 78.415373 c -18.413214,0 -33.681722,-0.06865 -33.93002,-0.152549 -0.384285,-0.129854 -7.847167,8.653359 -31.409331,36.966262 l -1.805335,2.16934 h 66.655066 c 64.500097,0 66.640737,-0.02 66.212107,-0.61966 z m 1.00041,-60.600484 -0.0874,-20.255582 -16.20078,20.611365 c -8.91042,11.336251 -16.23245,20.727129 -16.27118,20.868617 -0.0387,0.141491 7.25162,8.966173 16.20077,19.610404 l 16.27119,19.35315 0.0874,-19.96618 c 0.0481,-10.981408 0.0481,-29.081205 0,-40.221774 z M 27.721249,99.919145 43.509742,81.002131 39.683683,76.190331 C 37.579349,73.54384 30.470714,64.590395 23.886715,56.293785 17.302716,47.997175 11.705938,40.985674 11.449429,40.712671 c -0.396019,-0.421484 -0.466378,5.508891 -0.466378,39.309928 0,34.140931 0.06758,39.735651 0.474852,39.309931 0.261169,-0.27301 7.579674,-9.00903 16.263346,-19.413385 z M 126.47457,57.564972 143.05451,36.463277 91.001827,36.384848 c -28.628969,-0.04314 -57.934023,0.03314 -65.122338,0.169492 l -13.069663,0.24792 16.628985,20.928171 16.628986,20.928171 31.913417,0.004 31.913416,0.004 16.57994,-21.101695 z"
      id="path106"
-     inkscape:connector-curvature="0" />
+     inkscape:connector-curvature="0"
+     inkscape:export-filename="/home/tarun/abs/custom/xfce4-applet-mail/src/xfce4-applet-mail-1.2.0/icons/48x48/xfce-mail-none.png"
+     inkscape:export-xdpi="32.599998"
+     inkscape:export-ydpi="32.599998" />
 </svg>
